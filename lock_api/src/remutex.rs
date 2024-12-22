@@ -544,7 +544,7 @@ impl<R: RawMutexTimed, G: GetThreadId, T: ?Sized> ReentrantMutex<R, G, T> {
     }
 }
 
-impl<R: RawMutex, G: GetThreadId, T: ?Sized + Default> Default for ReentrantMutex<R, G, T> {
+impl<R: RawMutex, G: GetThreadId, T: Default> Default for ReentrantMutex<R, G, T> {
     #[inline]
     fn default() -> ReentrantMutex<R, G, T> {
         ReentrantMutex::new(Default::default())

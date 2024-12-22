@@ -1245,7 +1245,7 @@ impl<R: RawRwLockUpgradeTimed, T: ?Sized> RwLock<R, T> {
     }
 }
 
-impl<R: RawRwLock, T: ?Sized + Default> Default for RwLock<R, T> {
+impl<R: RawRwLock, T: Default> Default for RwLock<R, T> {
     #[inline]
     fn default() -> RwLock<R, T> {
         RwLock::new(Default::default())

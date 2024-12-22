@@ -431,7 +431,7 @@ impl<R: RawMutexTimed, T: ?Sized> Mutex<R, T> {
     }
 }
 
-impl<R: RawMutex, T: ?Sized + Default> Default for Mutex<R, T> {
+impl<R: RawMutex, T: Default> Default for Mutex<R, T> {
     #[inline]
     fn default() -> Mutex<R, T> {
         Mutex::new(Default::default())
