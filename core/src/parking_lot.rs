@@ -492,6 +492,7 @@ impl ParkResult {
 }
 
 /// Result of an unpark operation.
+#[non_exhaustive]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug)]
 pub struct UnparkResult {
     /// The number of threads that were unparked.
@@ -507,10 +508,7 @@ pub struct UnparkResult {
     /// This is set to true on average once every 0.5ms for any given key. It
     /// should be used to switch to a fair unlocking mechanism for a particular
     /// unlock.
-    pub be_fair: bool,
-
-    /// Private field so new fields can be added without breakage.
-    _sealed: (),
+    pub be_fair: bool
 }
 
 /// Operation that `unpark_requeue` should perform.
