@@ -629,15 +629,14 @@ pub unsafe fn park(
         // Park our thread and determine whether we were woken up by an unpark
         // or by our timeout. Note that this isn't precise: we can still be
         // unparked since we are still in the queue.
-        let unparked = match timeout {
-            Some(timeout) => thread_data.parker.park_until(timeout),
-            None => {
+        let unparked = if let Some(timeout) = timeout {
+                thread_data.parker.park_until(timeout)
+            } else {
                 thread_data.parker.park();
                 // call deadlock detection on_unpark hook
                 deadlock::on_unpark(thread_data);
                 true
-            }
-        };
+            };
 
         // If we were unparked, return now
         if unparked {
