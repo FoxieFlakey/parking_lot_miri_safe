@@ -312,12 +312,12 @@ trait LockState: Copy {
 impl LockState for *mut ThreadData {
     #[inline]
     fn is_locked(self) -> bool {
-        (self as usize) & LOCKED_BIT != 0
+        self.addr() & LOCKED_BIT != 0
     }
 
     #[inline]
     fn is_queue_locked(self) -> bool {
-        (self as usize) & QUEUE_LOCKED_BIT != 0
+        self.addr() & QUEUE_LOCKED_BIT != 0
     }
 
     #[inline]
