@@ -850,7 +850,7 @@ pub unsafe fn unpark_all(key: usize, unpark_token: UnparkToken) -> usize {
     // Now that we are outside the lock, wake up all the threads that we removed
     // from the queue.
     let num_threads = threads.len();
-    for handle in threads.into_iter() {
+    for handle in threads {
         handle.unpark();
     }
 
@@ -1075,7 +1075,7 @@ pub unsafe fn unpark_filter(
 
     // Pass the token to all threads that are going to be unparked and prepare
     // them for unparking.
-    for t in threads.iter_mut() {
+    for t in &mut threads {
         (*t.0).unpark_token.set(token);
         t.1 = Some((*t.0).parker.unpark_lock());
     }
@@ -1085,7 +1085,7 @@ pub unsafe fn unpark_filter(
 
     // Now that we are outside the lock, wake up all the threads that we removed
     // from the queue.
-    for (_, handle) in threads.into_iter() {
+    for (_, handle) in threads {
         handle.unchecked_unwrap().unpark();
     }
 
