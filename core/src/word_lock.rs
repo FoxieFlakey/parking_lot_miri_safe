@@ -10,8 +10,9 @@ use crate::thread_parker::{ThreadParker, ThreadParkerT, UnparkHandleT};
 use core::{
     cell::Cell,
     mem, ptr,
-    sync::atomic::{fence, AtomicUsize, Ordering},
+    sync::atomic::{fence, Ordering},
 };
+use std::sync::atomic::AtomicPtr;
 
 struct ThreadData {
     parker: ThreadParker,
@@ -74,14 +75,14 @@ const QUEUE_MASK: usize = !3;
 // Word-sized lock that is used to implement the parking_lot API. Since this
 // can't use parking_lot, it instead manages its own queue of waiting threads.
 pub struct WordLock {
-    state: AtomicUsize,
+    state: AtomicPtr<ThreadData>,
 }
 
 impl WordLock {
     /// Returns a new, unlocked, `WordLock`.
     pub const fn new() -> Self {
         WordLock {
-            state: AtomicUsize::new(0),
+            state: AtomicPtr::new(ptr::null_mut()),
         }
     }
 
@@ -89,7 +90,7 @@ impl WordLock {
     pub fn lock(&self) {
         if self
             .state
-            .compare_exchange_weak(0, LOCKED_BIT, Ordering::Acquire, Ordering::Relaxed)
+            .compare_exchange_weak(ptr::null_mut(), ptr::null_mut::<ThreadData>().map_addr(|_| LOCKED_BIT), Ordering::Acquire, Ordering::Relaxed)
             .is_ok()
         {
             return;
@@ -100,7 +101,9 @@ impl WordLock {
     /// Must not be called on an already unlocked `WordLock`!
     #[inline]
     pub unsafe fn unlock(&self) {
-        let state = self.state.fetch_sub(LOCKED_BIT, Ordering::Release);
+        let state = self.state.fetch_update(Ordering::Release, Ordering::Relaxed, |x| {
+            Some(x.map_addr(|x| x - LOCKED_BIT))
+        }).unwrap();
         if state.is_queue_locked() || state.queue_head().is_null() {
             return;
         }
@@ -116,7 +119,7 @@ impl WordLock {
             if !state.is_locked() {
                 match self.state.compare_exchange_weak(
                     state,
-                    state | LOCKED_BIT,
+                    state.map_addr(|x| x | LOCKED_BIT),
                     Ordering::Acquire,
                     Ordering::Relaxed,
                 ) {
@@ -188,7 +191,7 @@ impl WordLock {
             // Try to grab the queue lock
             match self.state.compare_exchange_weak(
                 state,
-                state | QUEUE_LOCKED_BIT,
+                state.map_addr(|x| x | QUEUE_LOCKED_BIT),
                 Ordering::Acquire,
                 Ordering::Relaxed,
             ) {
@@ -229,7 +232,7 @@ impl WordLock {
             if state.is_locked() {
                 match self.state.compare_exchange_weak(
                     state,
-                    state & !QUEUE_LOCKED_BIT,
+                    state.map_addr(|x| x & !QUEUE_LOCKED_BIT),
                     Ordering::Release,
                     Ordering::Relaxed,
                 ) {
@@ -248,7 +251,7 @@ impl WordLock {
                 loop {
                     match self.state.compare_exchange_weak(
                         state,
-                        state & LOCKED_BIT,
+                        state.map_addr(|x| x & LOCKED_BIT),
                         Ordering::Release,
                         Ordering::Relaxed,
                     ) {
@@ -271,7 +274,9 @@ impl WordLock {
                 unsafe {
                     (*queue_head).queue_tail.set(new_tail);
                 }
-                self.state.fetch_and(!QUEUE_LOCKED_BIT, Ordering::Release);
+                self.state.fetch_update(Ordering::Release, Ordering::Relaxed, |x| {
+                    Some(x.map_addr(|x| x & !QUEUE_LOCKED_BIT))
+                }).unwrap();
             }
 
             // Finally, wake up the thread we removed from the queue. Note that
@@ -289,7 +294,7 @@ impl WordLock {
 // Thread-Sanitizer only has partial fence support, so when running under it, we
 // try and avoid false positives by using a discarded acquire load instead.
 #[inline]
-fn fence_acquire(a: &AtomicUsize) {
+fn fence_acquire(a: &AtomicPtr<ThreadData>) {
     if cfg!(tsan_enabled) {
         let _ = a.load(Ordering::Acquire);
     } else {
@@ -304,24 +309,26 @@ trait LockState {
     fn with_queue_head(self, thread_data: *const ThreadData) -> Self;
 }
 
-impl LockState for usize {
+impl LockState for *mut ThreadData {
     #[inline]
     fn is_locked(self) -> bool {
-        self & LOCKED_BIT != 0
+        (self as usize) & LOCKED_BIT != 0
     }
 
     #[inline]
     fn is_queue_locked(self) -> bool {
-        self & QUEUE_LOCKED_BIT != 0
+        (self as usize) & QUEUE_LOCKED_BIT != 0
     }
 
     #[inline]
     fn queue_head(self) -> *const ThreadData {
-        (self & QUEUE_MASK) as *const ThreadData
+        self.map_addr(|x| x & QUEUE_MASK)
     }
 
     #[inline]
     fn with_queue_head(self, thread_data: *const ThreadData) -> Self {
-        (self & !QUEUE_MASK) | thread_data as *const _ as usize
+        // (self & !QUEUE_MASK) | thread_data as *const _ as usize
+        // self.map_addr(|x| ((x & !QUEUE_MASK) | thread_data.expose_provenance()));
+        thread_data.map_addr(|x|x| (self.addr() & !QUEUE_MASK)) as Self
     }
 }
