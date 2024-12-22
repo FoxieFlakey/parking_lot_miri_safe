@@ -67,7 +67,7 @@ struct HashTable {
 
 impl HashTable {
     // NOTE: Box is allowed here, as this need to be allocated in heap and 'leaked'
-    #[allow(clippy::unnecessary_box_returns)]
+    #[expect(clippy::unnecessary_box_returns)]
     #[inline]
     fn new(num_threads: usize, prev: *const HashTable) -> Box<HashTable> {
         let new_size = (num_threads * LOAD_FACTOR).next_power_of_two();
