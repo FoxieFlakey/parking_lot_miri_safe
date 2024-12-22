@@ -483,11 +483,7 @@ impl ParkResult {
     /// Returns true if we were unparked by another thread.
     #[inline]
     pub fn is_unparked(self) -> bool {
-        if let ParkResult::Unparked(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, ParkResult::Unparked(_))
     }
 }
 
