@@ -347,12 +347,12 @@ unsafe fn rehash_bucket_into(bucket: &'static Bucket, table: &mut HashTable) {
 #[cfg(target_pointer_width = "32")]
 #[inline]
 fn hash(key: usize, bits: u32) -> usize {
-    key.wrapping_mul(0x9E3779B9) >> (32 - bits)
+    key.wrapping_mul(0x9E37_79B9) >> (32 - bits)
 }
 #[cfg(target_pointer_width = "64")]
 #[inline]
 fn hash(key: usize, bits: u32) -> usize {
-    key.wrapping_mul(0x9E3779B97F4A7C15) >> (64 - bits)
+    key.wrapping_mul(0x9E37_79B9_7F4A_7C15) >> (64 - bits)
 }
 
 /// Locks the bucket for the given key and returns a reference to it.
