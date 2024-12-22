@@ -63,14 +63,16 @@ impl super::ThreadParkerT for ThreadParker {
                 return false;
             }
             let diff = timeout - now;
-            if diff.as_secs() > i64::max_value() as u64 {
+            let diff_secs = diff.try_into();
+            let diff_nanos = diff.subsec_nanos();
+            if diff_secs.is_err() {
                 // Timeout overflowed, just sleep indefinitely
                 self.park();
                 return true;
             }
             let ts = TimeSpec {
-                tv_sec: diff.as_secs() as i64,
-                tv_nsec: diff.subsec_nanos() as i32,
+                tv_sec: diff_secs.unwrap(),
+                tv_nsec: diff_nanos,
             };
             self.futex_wait(Some(ts));
         }
