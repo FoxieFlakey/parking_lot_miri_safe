@@ -57,6 +57,9 @@ pub struct RawRwLock {
 }
 
 unsafe impl lock_api::RawRwLock for RawRwLock {
+    // Allow clippy::declare_interior_mutable_const because it is required
+    // due API requires INIT to be const
+    #[allow(clippy::declare_interior_mutable_const)]
     const INIT: RawRwLock = RawRwLock {
         state: AtomicUsize::new(0),
     };

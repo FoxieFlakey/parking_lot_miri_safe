@@ -56,6 +56,9 @@ pub struct RawMutex {
 }
 
 unsafe impl lock_api::RawMutex for RawMutex {
+    // Allow clippy::declare_interior_mutable_const because it is required
+    // due API requires INIT to be const
+    #[allow(clippy::declare_interior_mutable_const)]
     const INIT: RawMutex = RawMutex {
         state: AtomicU8::new(0),
     };

@@ -12,6 +12,9 @@ use lock_api::RawMutexFair;
 pub struct RawFairMutex(RawMutex);
 
 unsafe impl lock_api::RawMutex for RawFairMutex {
+    // Allow clippy::declare_interior_mutable_const because it is required
+    // due API requires INIT to be const
+    #[allow(clippy::declare_interior_mutable_const)]
     const INIT: Self = RawFairMutex(<RawMutex as lock_api::RawMutex>::INIT);
 
     type GuardMarker = <RawMutex as lock_api::RawMutex>::GuardMarker;
