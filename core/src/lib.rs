@@ -21,10 +21,10 @@
 //!
 //! There are two main operations that can be performed on the parking lot:
 //!
-//!  - *Parking* refers to suspending the thread while simultaneously enqueuing it
-//! on a queue keyed by some address.
+//! - *Parking* refers to suspending the thread while simultaneously enqueuing it
+//!   on a queue keyed by some address.
 //! - *Unparking* refers to dequeuing a thread from a queue keyed by some address
-//! and resuming it.
+//!   and resuming it.
 //!
 //! See the documentation of the individual functions for more details.
 //!
