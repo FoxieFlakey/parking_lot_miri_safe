@@ -69,20 +69,26 @@ impl super::ThreadParkerT for ThreadParker {
 
     #[inline]
     unsafe fn park_until(&self, timeout: Instant) -> bool {
+        // Acknowledge the deprecation warning, it currently doesn't
+        // matter, its merely used to cast result from as_secs into
+        // appropriate libc::time_t to be written into libc::timespec
+        #[expect(deprecated)]
+        type LibcTimeType = libc::time_t;
+        
         while self.futex.load(Ordering::Acquire) != 0 {
             let now = Instant::now();
             if timeout <= now {
                 return false;
             }
             let diff = timeout - now;
-            if diff.as_secs() as libc::time_t as u64 != diff.as_secs() {
+            if diff.as_secs() as LibcTimeType as u64 != diff.as_secs() {
                 // Timeout overflowed, just sleep indefinitely
                 self.park();
                 return true;
             }
             // SAFETY: libc::timespec is zero initializable.
             let mut ts: libc::timespec = std::mem::zeroed();
-            ts.tv_sec = diff.as_secs() as libc::time_t;
+            ts.tv_sec = diff.as_secs() as LibcTimeType;
             ts.tv_nsec = diff.subsec_nanos() as tv_nsec_t;
             self.futex_wait(Some(ts));
         }
