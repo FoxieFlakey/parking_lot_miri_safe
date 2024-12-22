@@ -84,6 +84,11 @@ pub unsafe trait RawMutex {
 /// thread if there is one, without giving other threads the opportunity to
 /// "steal" the lock in the meantime. This is typically slower than unfair
 /// unlocking, but may be necessary in certain circumstances.
+///
+/// # Safety
+///
+/// Implementation must be behave like a mutual exclusion lock. See safety doc for
+/// [`RawMutex`].
 pub unsafe trait RawMutexFair: RawMutex {
     /// Unlocks this mutex using a fair unlock protocol.
     ///
@@ -113,6 +118,11 @@ pub unsafe trait RawMutexFair: RawMutex {
 ///
 /// The `Duration` and `Instant` types are specified as associated types so that
 /// this trait is usable even in `no_std` environments.
+///
+/// # Safety
+///
+/// Implementation must be behave like a mutual exclusion lock. See safety doc for
+/// [`RawMutex`].
 pub unsafe trait RawMutexTimed: RawMutex {
     /// Duration type used for `try_lock_for`.
     type Duration;
