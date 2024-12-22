@@ -202,7 +202,7 @@ fn with_thread_data<T>(f: impl FnOnce(&ThreadData) -> T) -> T {
     let mut thread_data_storage = None;
     thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
     let thread_data_ptr = THREAD_DATA
-        .try_with(|x| ptr::from_ref(x))
+        .try_with(ptr::from_ref)
         .unwrap_or_else(|_| thread_data_storage.get_or_insert_with(ThreadData::new));
 
     f(unsafe { &*thread_data_ptr })
