@@ -302,7 +302,7 @@ fn fence_acquire(a: &AtomicPtr<ThreadData>) {
     }
 }
 
-trait LockState {
+trait LockState: Copy {
     fn is_locked(self) -> bool;
     fn is_queue_locked(self) -> bool;
     fn queue_head(self) -> *const ThreadData;
