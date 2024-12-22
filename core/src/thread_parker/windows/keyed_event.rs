@@ -97,7 +97,7 @@ impl KeyedEvent {
 
     #[inline]
     pub unsafe fn park(&'static self, key: &AtomicUsize) {
-        let status = self.wait_for(key as *const _ as *mut ffi::c_void, ptr::null_mut());
+        let status = self.wait_for(ptr::from_ref(key).cast_mut().cast::<ffi::c_void>(), ptr::null_mut());
         debug_assert_eq!(status, STATUS_SUCCESS);
     }
 
@@ -118,9 +118,13 @@ impl KeyedEvent {
         // NT uses a timeout in units of 100ns. We use a negative value to
         // indicate a relative timeout based on a monotonic clock.
         let diff = timeout - now;
-        let value = (diff.as_secs() as i64)
-            .checked_mul(-10000000)
-            .and_then(|x| x.checked_sub((diff.subsec_nanos() as i64 + 99) / 100));
+        let diff_nanos = i64::try_from(diff.subsec_nanos())
+            .map_or(None, |diff_nanos| diff_nanos.checked_add(99))
+            .map_or(None, |diff_nanos| diff_nanos.checked_div(100));
+
+        let value = i64::try_from(diff.as_secs())
+            .map_or(None, |x| x.checked_mul(-10000000))
+            .and_then(|x| x.checked_sub(diff_nanos?));
 
         let mut nt_timeout = match value {
             Some(x) => x,
@@ -131,7 +135,7 @@ impl KeyedEvent {
             }
         };
 
-        let status = self.wait_for(key as *const _ as *mut ffi::c_void, &mut nt_timeout);
+        let status = self.wait_for(ptr::from_ref(key).cast_mut().cast::<ffi::c_void>(), &mut nt_timeout);
         if status == STATUS_SUCCESS {
             return true;
         }
@@ -151,8 +155,8 @@ impl KeyedEvent {
         // If the state was STATE_PARKED then we need to wake up the thread
         if key.swap(STATE_UNPARKED, Ordering::Relaxed) == STATE_PARKED {
             UnparkHandle {
-                key: key,
                 keyed_event: self,
+                key,
             }
         } else {
             UnparkHandle {
@@ -187,7 +191,7 @@ impl UnparkHandle {
     #[inline]
     pub unsafe fn unpark(self) {
         if !self.key.is_null() {
-            let status = self.keyed_event.release(self.key as *mut ffi::c_void);
+            let status = self.keyed_event.release(self.key.cast_mut().cast::<ffi::c_void>());
             debug_assert_eq!(status, STATUS_SUCCESS);
         }
     }
