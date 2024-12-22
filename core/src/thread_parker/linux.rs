@@ -12,15 +12,6 @@ use core::{
 use std::thread;
 use std::time::Instant;
 
-// x32 Linux uses a non-standard type for tv_nsec in timespec.
-// See https://sourceware.org/bugzilla/show_bug.cgi?id=16437
-#[cfg(all(target_arch = "x86_64", target_pointer_width = "32"))]
-#[allow(non_camel_case_types)]
-type tv_nsec_t = i64;
-#[cfg(not(all(target_arch = "x86_64", target_pointer_width = "32")))]
-#[allow(non_camel_case_types)]
-type tv_nsec_t = libc::c_long;
-
 fn errno() -> libc::c_int {
     #[cfg(target_os = "linux")]
     unsafe {
@@ -68,27 +59,23 @@ impl super::ThreadParkerT for ThreadParker {
 
     #[inline]
     unsafe fn park_until(&self, timeout: Instant) -> bool {
-        // Acknowledge the deprecation warning, it currently doesn't
-        // matter, its merely used to cast result from as_secs into
-        // appropriate libc::time_t to be written into libc::timespec
-        #[expect(deprecated)]
-        type LibcTimeType = libc::time_t;
-        
         while self.futex.load(Ordering::Acquire) != 0 {
             let now = Instant::now();
             if timeout <= now {
                 return false;
             }
             let diff = timeout - now;
-            if diff.as_secs() as LibcTimeType as u64 != diff.as_secs() {
+            let diff_secs = diff.as_secs().try_into();
+            let diff_subsec_nanos = diff.subsec_nanos().try_into();
+            if diff_secs.is_err() || diff_subsec_nanos.is_err() {
                 // Timeout overflowed, just sleep indefinitely
                 self.park();
                 return true;
             }
             // SAFETY: libc::timespec is zero initializable.
             let mut ts: libc::timespec = std::mem::zeroed();
-            ts.tv_sec = diff.as_secs() as LibcTimeType;
-            ts.tv_nsec = diff.subsec_nanos() as tv_nsec_t;
+            ts.tv_sec = diff_secs.unwrap();
+            ts.tv_nsec = diff_subsec_nanos.unwrap();
             self.futex_wait(Some(ts));
         }
         true
