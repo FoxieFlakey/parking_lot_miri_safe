@@ -104,6 +104,12 @@ pub unsafe trait RawRwLock {
 /// thread if there is one, without giving other threads the opportunity to
 /// "steal" the lock in the meantime. This is typically slower than unfair
 /// unlocking, but may be necessary in certain circumstances.
+///
+/// # Safety
+///
+/// Implementation must properly implements read-write lock behaviour. See
+/// safety documentation for [`RawRwLock`] for what behaviour implementation must
+/// implement.
 pub unsafe trait RawRwLockFair: RawRwLock {
     /// Releases a shared lock using a fair unlock protocol.
     ///
@@ -150,6 +156,12 @@ pub unsafe trait RawRwLockFair: RawRwLock {
 
 /// Additional methods for `RwLock`s which support atomically downgrading an
 /// exclusive lock to a shared lock.
+///
+/// # Safety
+///
+/// Implementation must properly implements downgrade read-write lock behaviour. See
+/// safety documentation for [`RawRwLock`] for what behaviour implementation must
+/// implement.
 pub unsafe trait RawRwLockDowngrade: RawRwLock {
     /// Atomically downgrades an exclusive lock into a shared lock without
     /// allowing any thread to take an exclusive lock in the meantime.
@@ -164,6 +176,12 @@ pub unsafe trait RawRwLockDowngrade: RawRwLock {
 ///
 /// The `Duration` and `Instant` types are specified as associated types so that
 /// this trait is usable even in `no_std` environments.
+///
+/// # Safety
+///
+/// Implementation must properly implements read-write lock behaviour. See
+/// safety documentation for [`RawRwLock`] for what behaviour implementation must
+/// implement.
 pub unsafe trait RawRwLockTimed: RawRwLock {
     /// Duration type used for `try_lock_for`.
     type Duration;
@@ -191,6 +209,12 @@ pub unsafe trait RawRwLockTimed: RawRwLock {
 /// to recursively lock a `RwLock`. However using this method can cause
 /// writers to starve since readers no longer block if a writer is waiting
 /// for the lock.
+///
+/// # Safety
+///
+/// Implementation must properly implements recursive read-write lock behaviour. See
+/// safety documentation for [`RawRwLock`] for what behaviour implementation must
+/// implement.
 pub unsafe trait RawRwLockRecursive: RawRwLock {
     /// Acquires a shared lock without deadlocking in case of a recursive lock.
     fn lock_shared_recursive(&self);
@@ -200,6 +224,12 @@ pub unsafe trait RawRwLockRecursive: RawRwLock {
 }
 
 /// Additional methods for `RwLock`s which support recursive read locks and timeouts.
+///
+/// # Safety
+///
+/// Implementation must properly implements recursive read-write lock behaviour. See
+/// safety documentation for [`RawRwLock`] for what behaviour implementation must
+/// implement.
 pub unsafe trait RawRwLockRecursiveTimed: RawRwLockRecursive + RawRwLockTimed {
     /// Attempts to acquire a shared lock until a timeout is reached, without
     /// deadlocking in case of a recursive lock.
@@ -216,6 +246,12 @@ pub unsafe trait RawRwLockRecursiveTimed: RawRwLockRecursive + RawRwLockTimed {
 /// This requires acquiring a special "upgradable read lock" instead of a
 /// normal shared lock. There may only be one upgradable lock at any time,
 /// otherwise deadlocks could occur when upgrading.
+///
+/// # Safety
+///
+/// Implementation must properly implements upgradeable read-write lock behaviour.
+/// See safety documentation for [`RawRwLock`] for what behaviour implementation
+/// must implement.
 pub unsafe trait RawRwLockUpgrade: RawRwLock {
     /// Acquires an upgradable lock, blocking the current thread until it is able to do so.
     fn lock_upgradable(&self);
@@ -248,6 +284,12 @@ pub unsafe trait RawRwLockUpgrade: RawRwLock {
 
 /// Additional methods for `RwLock`s which support upgradable locks and fair
 /// unlocking.
+///
+/// # Safety
+///
+/// Implementation must properly implements upgradeable read-write lock behaviour.
+/// See safety documentation for [`RawRwLock`] for what behaviour implementation
+/// must implement.
 pub unsafe trait RawRwLockUpgradeFair: RawRwLockUpgrade + RawRwLockFair {
     /// Releases an upgradable lock using a fair unlock protocol.
     ///
@@ -273,6 +315,12 @@ pub unsafe trait RawRwLockUpgradeFair: RawRwLockUpgrade + RawRwLockFair {
 
 /// Additional methods for `RwLock`s which support upgradable locks and lock
 /// downgrading.
+///
+/// # Safety
+///
+/// Implementation must properly implements upgradeable and downgradeable read-write
+/// lock behaviour. See safety documentation for [`RawRwLock`] for what behaviour
+/// implementation must implement.
 pub unsafe trait RawRwLockUpgradeDowngrade: RawRwLockUpgrade + RawRwLockDowngrade {
     /// Downgrades an upgradable lock to a shared lock.
     ///
@@ -291,6 +339,12 @@ pub unsafe trait RawRwLockUpgradeDowngrade: RawRwLockUpgrade + RawRwLockDowngrad
 
 /// Additional methods for `RwLock`s which support upgradable locks and locking
 /// with timeouts.
+///
+/// # Safety
+///
+/// Implementation must properly implements upgradeable read-write
+/// lock behaviour. See safety documentation for [`RawRwLock`] for
+/// what behaviour implementation must implement.
 pub unsafe trait RawRwLockUpgradeTimed: RawRwLockUpgrade + RawRwLockTimed {
     /// Attempts to acquire an upgradable lock until a timeout is reached.
     fn try_lock_upgradable_for(&self, timeout: Self::Duration) -> bool;
