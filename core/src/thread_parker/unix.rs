@@ -218,18 +218,18 @@ fn timespec_now() -> libc::timespec {
 fn timeout_to_timespec(timeout: Duration) -> Option<libc::timespec> {
     // Handle overflows early on
     let Ok(timeout_secs) = timeout.as_secs().try_into() else { return None; };
-    let timeout_nsecs: tv_nsec_t = timeout.subsec_nanos().into();
+    let timeout_nanosecs: tv_nsec_t = timeout.subsec_nanos().into();
 
     let now = timespec_now();
-    let mut nsec = now.tv_nsec + timeout_nsecs;
+    let mut nanosec = now.tv_nsec + timeout_nanosecs;
     let mut sec = now.tv_sec.checked_add(timeout_secs);
-    if nsec >= 1_000_000_000 {
-        nsec -= 1_000_000_000;
+    if nanosec >= 1_000_000_000 {
+        nanosec -= 1_000_000_000;
         sec = sec.and_then(|sec| sec.checked_add(1));
     }
 
     sec.map(|sec| libc::timespec {
-        tv_nsec: nsec,
+        tv_nsec: nanosec,
         tv_sec: sec,
     })
 }
