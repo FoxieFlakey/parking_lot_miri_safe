@@ -88,8 +88,8 @@ impl WaitAddress {
         key.store(0, Ordering::Release);
 
         UnparkHandle {
-            key: key,
             waitaddress: self,
+            key,
         }
     }
 
