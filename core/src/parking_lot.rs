@@ -434,6 +434,11 @@ fn lock_bucket_pair(key1: usize, key2: usize) -> (&'static Bucket, &'static Buck
         // then we are good to go! The lock we grabbed prevents any rehashes.
         if HASHTABLE.load(Ordering::Relaxed) == hashtable as *const _ as *mut _ {
             // Now lock the second bucket and return the two buckets
+            // NOTE: Need to use this if chain because this code might be
+            // performance sensitive due #[inline] attribute and Clippy
+            // suggestion may result in degraded performance and parking_lot
+            // don't want it
+            #[expect(clippy::comparison_chain)]
             if hash1 == hash2 {
                 return (bucket1, bucket1);
             } else if hash1 < hash2 {
