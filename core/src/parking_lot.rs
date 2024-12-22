@@ -201,7 +201,7 @@ fn with_thread_data<T>(f: impl FnOnce(&ThreadData) -> T) -> T {
     let mut thread_data_storage = None;
     thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
     let thread_data_ptr = THREAD_DATA
-        .try_with(|x| x as *const ThreadData)
+        .try_with(|x| ptr::from_ref(x))
         .unwrap_or_else(|_| thread_data_storage.get_or_insert_with(ThreadData::new));
 
     f(unsafe { &*thread_data_ptr })
@@ -279,7 +279,7 @@ fn grow_hashtable(num_threads: usize) {
         // Now check if our table is still the latest one. Another thread could
         // have grown the hash table between us reading HASHTABLE and locking
         // the buckets.
-        if HASHTABLE.load(Ordering::Relaxed) == table as *const _ as *mut _ {
+        if HASHTABLE.load(Ordering::Relaxed) == ptr::from_ref(table).cast_mut() {
             break table;
         }
 
@@ -367,7 +367,7 @@ fn lock_bucket(key: usize) -> &'static Bucket {
 
         // If no other thread has rehashed the table before we grabbed the lock
         // then we are good to go! The lock we grabbed prevents any rehashes.
-        if HASHTABLE.load(Ordering::Relaxed) == hashtable as *const _ as *mut _ {
+        if HASHTABLE.load(Ordering::Relaxed) == ptr::from_ref(hashtable).cast_mut() {
             return bucket;
         }
 
@@ -395,7 +395,7 @@ fn lock_bucket_checked(key: &AtomicUsize) -> (usize, &'static Bucket) {
         // Check that both the hash table and key are correct while the bucket
         // is locked. Note that the key can't change once we locked the proper
         // bucket for it, so we just keep trying until we have the correct key.
-        if HASHTABLE.load(Ordering::Relaxed) == hashtable as *const _ as *mut _
+        if HASHTABLE.load(Ordering::Relaxed) == ptr::from_ref(hashtable).cast_mut()
             && key.load(Ordering::Relaxed) == current_key
         {
             return (current_key, bucket);
@@ -432,7 +432,7 @@ fn lock_bucket_pair(key1: usize, key2: usize) -> (&'static Bucket, &'static Buck
 
         // If no other thread has rehashed the table before we grabbed the lock
         // then we are good to go! The lock we grabbed prevents any rehashes.
-        if HASHTABLE.load(Ordering::Relaxed) == hashtable as *const _ as *mut _ {
+        if HASHTABLE.load(Ordering::Relaxed) == ptr::from_ref(hashtable).cast_mut() {
             // Now lock the second bucket and return the two buckets
             // NOTE: Need to use this if chain because this code might be
             // performance sensitive due #[inline] attribute and Clippy

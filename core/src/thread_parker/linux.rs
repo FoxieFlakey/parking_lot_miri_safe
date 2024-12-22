@@ -111,7 +111,7 @@ impl ThreadParker {
     fn futex_wait(&self, ts: Option<libc::timespec>) {
         let ts_ptr = ts
             .as_ref()
-            .map(|ts_ref| ts_ref as *const _)
+            .map(|ts_ref| ptr::from_ref(ts_ref))
             .unwrap_or(ptr::null());
         let r = unsafe {
             libc::syscall(

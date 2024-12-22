@@ -55,7 +55,7 @@ fn with_thread_data<T>(f: impl FnOnce(&ThreadData) -> T) -> T {
     // version in thread-local storage if possible.
     if !ThreadParker::IS_CHEAP_TO_CONSTRUCT {
         thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
-        if let Ok(tls_thread_data) = THREAD_DATA.try_with(|x| x as *const ThreadData) {
+        if let Ok(tls_thread_data) = THREAD_DATA.try_with(|x| ptr::from_ref(x)) {
             thread_data_ptr = tls_thread_data;
         }
     }
