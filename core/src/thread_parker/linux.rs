@@ -66,8 +66,7 @@ impl super::ThreadParkerT for ThreadParker {
             }
             let diff = timeout - now;
             let diff_secs = diff.as_secs().try_into();
-            let diff_subsec_nanos = diff.subsec_nanos().try_into();
-            if diff_secs.is_err() || diff_subsec_nanos.is_err() {
+            if diff_secs.is_err() {
                 // Timeout overflowed, just sleep indefinitely
                 self.park();
                 return true;
@@ -75,7 +74,7 @@ impl super::ThreadParkerT for ThreadParker {
             // SAFETY: libc::timespec is zero initializable.
             let mut ts: libc::timespec = std::mem::zeroed();
             ts.tv_sec = diff_secs.unwrap();
-            ts.tv_nsec = diff_subsec_nanos.unwrap();
+            ts.tv_nsec = diff.subsec_nanos().into();
             self.futex_wait(Some(ts));
         }
         true
