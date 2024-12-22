@@ -74,8 +74,9 @@ impl HashTable {
         let now = TimeoutInstant::now();
         let mut entries = Vec::with_capacity(new_size);
         for i in 0..new_size {
+            let seed: u32 = i.try_into().unwrap();
             // We must ensure the seed is not zero
-            entries.push(Bucket::new(now, i as u32 + 1));
+            entries.push(Bucket::new(now, seed.saturating_add(1)));
         }
 
         Box::new(HashTable {
