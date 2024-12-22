@@ -38,6 +38,7 @@
 //! reference count and the two mutex bits in the same atomic word.
 
 #![feature(strict_provenance)]
+#![deny(clippy::as_conversions)]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
 #![cfg_attr(
