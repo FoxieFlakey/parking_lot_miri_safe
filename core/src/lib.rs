@@ -37,8 +37,20 @@
 //! For example, one could create an `ArcMutex` type that combines the atomic
 //! reference count and the two mutex bits in the same atomic word.
 
-#![feature(strict_provenance)]
+#![deny(clippy::perf)]
+#![deny(clippy::correctness)]
+#![deny(clippy::suspicious)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::complexity)]
+#![deny(clippy::style)]
 #![deny(clippy::as_conversions)]
+#![deny(clippy::as_underscore)]
+
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::inline_always)]
+
+#![feature(strict_provenance)]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
 #![cfg_attr(
