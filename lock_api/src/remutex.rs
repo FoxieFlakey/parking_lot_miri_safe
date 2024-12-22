@@ -306,7 +306,7 @@ impl<R: RawMutex, G: GetThreadId, T: ?Sized> ReentrantMutex<R, G, T> {
     #[inline]
     pub unsafe fn make_guard_unchecked(&self) -> ReentrantMutexGuard<'_, R, G, T> {
         ReentrantMutexGuard {
-            remutex: &self,
+            remutex: self,
             marker: PhantomData,
         }
     }
