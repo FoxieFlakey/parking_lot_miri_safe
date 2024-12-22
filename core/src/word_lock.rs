@@ -327,8 +327,6 @@ impl LockState for *mut ThreadData {
 
     #[inline]
     fn with_queue_head(self, thread_data: *const ThreadData) -> Self {
-        // (self & !QUEUE_MASK) | thread_data as *const _ as usize
-        // self.map_addr(|x| ((x & !QUEUE_MASK) | thread_data.expose_provenance()));
-        thread_data.map_addr(|x|x| (self.addr() & !QUEUE_MASK)) as Self
+        thread_data.map_addr(|x| x | (self.addr() & !QUEUE_MASK)).cast_mut()
     }
 }
