@@ -38,5 +38,3 @@ serde = ["lock_api/serde"]
 send_guard = []
 hardware-lock-elision = []
 
-[workspace]
-exclude = ["benchmark"]
