@@ -614,10 +614,10 @@ pub unsafe fn park(
         thread_data.key.store(key, Ordering::Relaxed);
         thread_data.park_token.set(park_token);
         thread_data.parker.prepare_park();
-        if !bucket.queue_head.get().is_null() {
-            (*bucket.queue_tail.get()).next_in_queue.set(thread_data);
-        } else {
+        if bucket.queue_head.get().is_null() {
             bucket.queue_head.set(thread_data);
+        } else {
+            (*bucket.queue_tail.get()).next_in_queue.set(thread_data);
         }
         bucket.queue_tail.set(thread_data);
         // SAFETY: We hold the lock here, as required
@@ -926,10 +926,10 @@ pub unsafe fn unpark_requeue(
                 wakeup_thread = Some(current);
                 result.unparked_threads = 1;
             } else {
-                if !requeue_threads.is_null() {
-                    (*requeue_threads_tail).next_in_queue.set(current);
-                } else {
+                if requeue_threads.is_null() {
                     requeue_threads = current;
+                } else {
+                    (*requeue_threads_tail).next_in_queue.set(current);
                 }
                 requeue_threads_tail = current;
                 (*current).key.store(key_to, Ordering::Relaxed);
@@ -959,12 +959,12 @@ pub unsafe fn unpark_requeue(
     // Add the requeued threads to the destination bucket
     if !requeue_threads.is_null() {
         (*requeue_threads_tail).next_in_queue.set(ptr::null());
-        if !bucket_to.queue_head.get().is_null() {
+        if bucket_to.queue_head.get().is_null() {
+            bucket_to.queue_head.set(requeue_threads);
+        } else {
             (*bucket_to.queue_tail.get())
                 .next_in_queue
                 .set(requeue_threads);
-        } else {
-            bucket_to.queue_head.set(requeue_threads);
         }
         bucket_to.queue_tail.set(requeue_threads_tail);
     }
