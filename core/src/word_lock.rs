@@ -268,7 +268,12 @@ impl WordLock {
                     
                     // Need an acquire fence before reading the new queue
                     fence_acquire(&self.state);
-                    continue 'outer;
+                    // NOTE: Strange bug in Clippy? it is needed to continue
+                    // on outside loop but when inserted in a block, Clippy
+                    // working as expected
+                    {
+                        continue 'outer;
+                    }
                 }
             } else {
                 unsafe {
