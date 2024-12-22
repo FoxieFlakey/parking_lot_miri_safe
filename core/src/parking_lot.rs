@@ -440,8 +440,10 @@ fn lock_bucket_pair(key1: usize, key2: usize) -> (&'static Bucket, &'static Buck
             // NOTE: Need to use this if chain because this code might be
             // performance sensitive due #[inline] attribute and Clippy
             // suggestion may result in degraded performance and parking_lot
-            // don't want it
+            // don't want it and redundant else allowed because it is for
+            // readability
             #[expect(clippy::comparison_chain)]
+            #[expect(clippy::redundant_else)]
             if hash1 == hash2 {
                 return (bucket1, bucket1);
             } else if hash1 < hash2 {
@@ -685,14 +687,14 @@ pub unsafe fn park(
                 // last thread on the queue.
                 timed_out(key, was_last_thread);
                 break;
-            } else {
-                if (*current).key.load(Ordering::Relaxed) == key {
-                    was_last_thread = false;
-                }
-                link = &(*current).next_in_queue;
-                previous = current;
-                current = link.get();
             }
+            
+            if (*current).key.load(Ordering::Relaxed) == key {
+                was_last_thread = false;
+            }
+            link = &(*current).next_in_queue;
+            previous = current;
+            current = link.get();
         }
 
         // There should be no way for our thread to have been removed from the queue
@@ -781,11 +783,11 @@ pub unsafe fn unpark_one(
             handle.unpark();
 
             return result;
-        } else {
-            link = &(*current).next_in_queue;
-            previous = current;
-            current = link.get();
         }
+        
+        link = &(*current).next_in_queue;
+        previous = current;
+        current = link.get();
     }
 
     // No threads with a matching key were found in the bucket

@@ -264,11 +264,11 @@ impl WordLock {
                     // find the previous element.
                     if state.queue_head().is_null() {
                         continue;
-                    } else {
-                        // Need an acquire fence before reading the new queue
-                        fence_acquire(&self.state);
-                        continue 'outer;
                     }
+                    
+                    // Need an acquire fence before reading the new queue
+                    fence_acquire(&self.state);
+                    continue 'outer;
                 }
             } else {
                 unsafe {
