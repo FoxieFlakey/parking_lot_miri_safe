@@ -3,10 +3,10 @@
 //! dependency for the Rust ecosystem, so the dependencies used by it have an
 //! outsize affect
 
-pub const INFINITE: u32 = 4294967295;
-pub const ERROR_TIMEOUT: u32 = 1460;
-pub const GENERIC_READ: u32 = 2147483648;
-pub const GENERIC_WRITE: u32 = 1073741824;
+pub const INFINITE: u32 = 4_294_967_295;
+pub const ERROR_TIMEOUT: u32 = 1_460;
+pub const GENERIC_READ: u32 = 2_147_483_648;
+pub const GENERIC_WRITE: u32 = 1_073_741_824;
 pub const STATUS_SUCCESS: i32 = 0;
 pub const STATUS_TIMEOUT: i32 = 258;
 

@@ -66,7 +66,7 @@ impl WaitAddress {
             let timeout = diff
                 .as_secs()
                 .checked_mul(1000)
-                .and_then(|x| x.checked_add((diff.subsec_nanos() as u64 + 999999) / 1000000))
+                .and_then(|x| x.checked_add((diff.subsec_nanos() as u64 + 999_999) / 1_000_000))
                 .map(|ms| {
                     if ms > std::u32::MAX as u64 {
                         INFINITE

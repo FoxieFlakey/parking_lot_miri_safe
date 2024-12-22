@@ -123,7 +123,7 @@ impl KeyedEvent {
             .map_or(None, |diff_nanos| diff_nanos.checked_div(100));
 
         let value = i64::try_from(diff.as_secs())
-            .map_or(None, |x| x.checked_mul(-10000000))
+            .map_or(None, |x| x.checked_mul(-10_000_000))
             .and_then(|x| x.checked_sub(diff_nanos?));
 
         let mut nt_timeout = match value {
