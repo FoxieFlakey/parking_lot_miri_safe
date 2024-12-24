@@ -50,7 +50,6 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::inline_always)]
 
-#![feature(strict_provenance)]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
 #![cfg_attr(
