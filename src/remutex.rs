@@ -19,7 +19,7 @@ unsafe impl GetThreadId for RawThreadId {
         // The address of a thread-local variable is guaranteed to be unique to the
         // current thread, and is also guaranteed to be non-zero. The variable has to have a
         // non-zero size to guarantee it has a unique address for each thread.
-        thread_local!(static KEY: u8 = 0);
+        thread_local!(static KEY: u8 = const { 0 });
         KEY.with(|x| {
             NonZeroUsize::new(x as *const _ as usize)
                 .expect("thread-local variable address is null")

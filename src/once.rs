@@ -273,7 +273,7 @@ impl Once {
         }
 
         struct PanicGuard<'a>(&'a Once);
-        impl<'a> Drop for PanicGuard<'a> {
+        impl Drop for PanicGuard<'_> {
             fn drop(&mut self) {
                 // Mark the state as poisoned, unlock it and unpark all threads.
                 let once = self.0;
